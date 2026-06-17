@@ -2,6 +2,7 @@
 // so the no-await rule doesn't apply to them here.
 /* eslint-disable @typescript-eslint/require-await */
 import { HookManager } from './hook-manager.service';
+import { HookContext, HookResult } from './hook.interfaces';
 
 describe('HookManager', () => {
   let hm: HookManager;
@@ -105,12 +106,52 @@ describe('HookManager', () => {
     expect(hm.hasHooks('session:created')).toBe(false);
   });
 
-  it('unregisterPlugin removes only that plugin’s hooks', () => {
+  it("unregisterPlugin removes only that plugin's hooks", () => {
     hm.register('A', 'session:ready', async ctx => ({ continue: true, data: ctx.data }));
     hm.register('A', 'session:ready', async ctx => ({ continue: true, data: ctx.data }));
     hm.register('B', 'session:ready', async ctx => ({ continue: true, data: ctx.data }));
 
     hm.unregisterPlugin('A');
     expect(hm.getHookCount('session:ready')).toBe(1); // only B remains
+  });
+});
+
+describe('HookManager re-entrancy guard', () => {
+  let manager: HookManager;
+
+  beforeEach(() => {
+    manager = new HookManager();
+  });
+
+  it('short-circuits a handler that re-fires the same event (no infinite recursion)', async () => {
+    let calls = 0;
+    manager.register('p1', 'message:sending', async (ctx: HookContext): Promise<HookResult> => {
+      calls += 1;
+      const inner = await manager.execute('message:sending', ctx.data, { source: 'test' });
+      expect(inner).toEqual({ continue: true, data: ctx.data });
+      return { continue: true };
+    });
+
+    const result = await manager.execute('message:sending', { n: 1 }, { source: 'test' });
+
+    expect(calls).toBe(1);
+    expect(result.continue).toBe(true);
+  });
+
+  it('does NOT block a handler that fires a DIFFERENT event', async () => {
+    const seen: string[] = [];
+    manager.register('p1', 'message:received', async (ctx: HookContext): Promise<HookResult> => {
+      seen.push('received');
+      await manager.execute('message:sent', ctx.data, { source: 'test' });
+      return { continue: true };
+    });
+    manager.register('p2', 'message:sent', async (): Promise<HookResult> => {
+      seen.push('sent');
+      return { continue: true };
+    });
+
+    await manager.execute('message:received', { n: 1 }, { source: 'test' });
+
+    expect(seen).toEqual(['received', 'sent']);
   });
 });
