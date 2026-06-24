@@ -275,6 +275,39 @@ curl -X POST http://localhost:2785/api/sessions/{sessionId}/webhooks \
 > Fields: `sender` / `recipient` / `body` / `type` / `mentions` / `fromMe` / `hasMedia` / `isGroup`. A
 > webhook with no filters behaves exactly as before. See the API specification for the full schema.
 
+## 🤖 MCP Server (AI Agents)
+
+OpenWA can expose a **curated set of tools over the [Model Context Protocol](https://modelcontextprotocol.io)** so AI agents (Claude, Cursor, …) can drive WhatsApp. It is **off by default** and **additive** — every REST route keeps working unchanged.
+
+Set `MCP_ENABLED=true` to mount a stateless Streamable-HTTP transport at **`POST /mcp`** on the existing server (same port, no extra process). It exposes ~39 curated tools (sessions, messaging, contacts, basic group ops, webhook reads) — a focused surface rather than the full API, so agents aren't overwhelmed and destructive operations stay off the agent path.
+
+```bash
+MCP_ENABLED=true npm run start:prod   # or set MCP_ENABLED in your .env / compose
+```
+
+Point an MCP client at it (e.g. for Claude Code, a `.mcp.json` at your project root):
+
+```json
+{
+  "mcpServers": {
+    "openwa": {
+      "type": "http",
+      "url": "http://localhost:2785/mcp",
+      "headers": { "Authorization": "Bearer YOUR_API_KEY" }
+    }
+  }
+}
+```
+
+The key can be passed as `Authorization: Bearer …` or `X-API-Key: …`. Every tool call goes through the **same API-key auth, role, and per-session scoping** as REST.
+
+**Security guidance:**
+
+- **Mint a dedicated, least-privilege key** for the agent — a non-admin, **session-scoped** key (`OPERATOR` role at most). The plaintext key is shown only once on creation; to rotate, create a new key and delete the old one.
+- The key **must not** carry an IP allow-list (`allowedIps`) — there is no genuine client IP over MCP, so such a key is rejected.
+- Set **`MCP_READONLY=true`** to mount only the read tools (no sends/writes).
+- **Do not expose `/mcp` to the public internet** without a fronting auth proxy. For a self-hosted, locally-reached deployment the static API key is appropriate; public exposure should use OAuth 2.1 (not yet built).
+
 ---
 
 ## 🛠 Tech Stack

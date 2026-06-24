@@ -32,6 +32,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { HooksModule } from './core/hooks';
 import { PluginsModule } from './core/plugins';
 import { PluginsApiModule } from './modules/plugins/plugins.module';
+import { AgentToolsModule } from './core/agent-tools/agent-tools.module';
 
 // Only import QueueModule if explicitly enabled to avoid Redis connection errors
 const queueModules: Array<Type | DynamicModule> = [];
@@ -41,6 +42,22 @@ if (process.env.QUEUE_ENABLED === 'true') {
     QueueModule: Type;
   };
   queueModules.push(queueModule.QueueModule);
+}
+
+// Only mount the MCP server if explicitly enabled to avoid startup cost and
+// the SDK import (which pulls in @modelcontextprotocol/sdk) in non-MCP deployments.
+const mcpModules: Array<Type | DynamicModule> = [];
+if (process.env.MCP_ENABLED === 'true') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { McpModule } = require('./modules/mcp/mcp.module') as typeof import('./modules/mcp/mcp.module');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { version } = require('../package.json') as { version: string };
+  mcpModules.push(
+    McpModule.forRoot({
+      basePath: '/mcp',
+      serverInfo: { name: 'openwa', version },
+    }),
+  );
 }
 
 // Serve the bundled dashboard SPA from this same NestJS process/port when a build is
@@ -216,6 +233,8 @@ if (dashboardServingEnabled && dashboardBuildPresent) {
     StatusModule, // Phase 3: Status/Stories API
     CatalogModule, // Phase 3: Catalog API (WhatsApp Business)
     PluginsApiModule, // Phase 5: Plugins API
+    AgentToolsModule, // Agent-invocable tool registry (protocol-neutral)
+    ...mcpModules, // MCP Streamable-HTTP server (opt-in via MCP_ENABLED=true)
     ...serveStaticModules, // Bundled dashboard SPA (production single-port setup)
   ],
 })

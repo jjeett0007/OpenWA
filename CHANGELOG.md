@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- MCP server (opt-in, `MCP_ENABLED=true`): exposes a curated ~39-tool agent surface (sessions, messaging, contacts, basic group ops, webhook reads) over the Model Context Protocol at `POST /mcp`, on the existing single port. Off by default — the MCP SDK is not loaded unless enabled, and every REST route is unchanged. Tools call the existing services and reuse the same API-key auth, role, and per-session scoping as REST; reads vs writes are tiered and `MCP_READONLY=true` mounts read tools only. Destructive/privileged operations are deliberately excluded from the surface. (relates to #256; salvages result-shaping from #461 — thanks @tobiasstrebitzer)
+
 ## [0.7.2] - 2026-06-24
 
 ### Added
