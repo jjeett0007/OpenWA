@@ -25,4 +25,28 @@ describe('SendTextStatusDto recipients validation', () => {
     const errors = await validate(plainToInstance(SendTextStatusDto, { text: 'hi', recipients: [123] }));
     expect(errors.some((e) => e.property === 'recipients')).toBe(true);
   });
+
+  it('rejects more than 256 recipients', async () => {
+    const recipients = Array.from({ length: 257 }, (_, i) => `${i}@c.us`);
+    const errors = await validate(plainToInstance(SendTextStatusDto, { text: 'hi', recipients }));
+    expect(errors.some((e) => e.property === 'recipients')).toBe(true);
+  });
+
+  it('accepts exactly 256 recipients', async () => {
+    const recipients = Array.from({ length: 256 }, (_, i) => `${i}@c.us`);
+    const errors = await validate(plainToInstance(SendTextStatusDto, { text: 'hi', recipients }));
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects malformed JIDs', async () => {
+    const errors = await validate(
+      plainToInstance(SendTextStatusDto, { text: 'hi', recipients: ['not-a-jid', '123@g.us', '@c.us', 'abc@lid'] }),
+    );
+    expect(errors.some((e) => e.property === 'recipients')).toBe(true);
+  });
+
+  it('accepts @lid recipients', async () => {
+    const errors = await validate(plainToInstance(SendTextStatusDto, { text: 'hi', recipients: ['6281@lid'] }));
+    expect(errors).toHaveLength(0);
+  });
 });
