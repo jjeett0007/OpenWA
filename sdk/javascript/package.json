@@ -1,20 +1,22 @@
 {
-  "name": "@rmyndharis/openwa",
-  "version": "0.5.0",
+  "author": "OpenWA Contributors",
   "description": "Official JavaScript/TypeScript SDK for OpenWA WhatsApp API Gateway",
-  "type": "module",
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.js",
-  "types": "./dist/cjs/index.d.ts",
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/esm/index.d.ts",
-        "default": "./dist/esm/index.js"
+        "default": "./dist/esm/index.js",
+        "types": "./dist/esm/index.d.ts"
       },
       "require": {
-        "types": "./dist/cjs/index.d.ts",
-        "default": "./dist/cjs/index.js"
+        "default": "./dist/cjs/index.js",
+        "types": "./dist/cjs/index.d.ts"
       }
     }
   },
@@ -22,15 +24,6 @@
     "dist",
     "README.md"
   ],
-  "scripts": {
-    "build": "node api.js && tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && node -e \"require('fs').writeFileSync('dist/cjs/package.json',JSON.stringify({type:'commonjs'}))\"",
-    "prepublishOnly": "npm run build",
-    "dev": "node api.js && tsc -p tsconfig.esm.json --watch",
-    "test": "tsc --noEmit && vitest run",
-    "test:watch": "vitest",
-    "smoke": "node scripts/smoke.mjs",
-    "typecheck": "tsc --noEmit"
-  },
   "keywords": [
     "whatsapp",
     "api",
@@ -38,20 +31,27 @@
     "openwa",
     "gateway"
   ],
-  "author": "OpenWA Contributors",
   "license": "MIT",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "name": "@rmyndharis/openwa",
+  "peerDependencies": {},
   "repository": {
+    "directory": "sdk/javascript",
     "type": "git",
-    "url": "https://github.com/rmyndharis/OpenWA",
-    "directory": "sdk/javascript"
+    "url": "https://github.com/rmyndharis/OpenWA"
   },
-  "engines": {
-    "node": ">=18"
+  "scripts": {
+    "build": "node init && tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && node -e \"require('fs').writeFileSync('dist/cjs/package.json',JSON.stringify({type:'commonjs'}))\"",
+    "dev": "node init && tsc -p tsconfig.esm.json --watch",
+    "prepublishOnly": "npm run build",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "tsc --noEmit && vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "sideEffects": false,
-  "peerDependencies": {},
-  "devDependencies": {
-    "typescript": "^5.7.3",
-    "vitest": "^2.1.0"
-  }
+  "type": "module",
+  "types": "./dist/cjs/index.d.ts",
+  "version": "0.5.0"
 }
