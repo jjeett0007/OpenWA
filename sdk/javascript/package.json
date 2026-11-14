@@ -42,8 +42,8 @@
     "url": "https://github.com/rmyndharis/OpenWA"
   },
   "scripts": {
-    "build": "node init && tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && node -e \"require('fs').writeFileSync('dist/cjs/package.json',JSON.stringify({type:'commonjs'}))\"",
-    "dev": "node init && tsc -p tsconfig.esm.json --watch",
+    "build": "tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && node -e \"require('fs').writeFileSync('dist/cjs/package.json',JSON.stringify({type:'commonjs'}))\"",
+    "dev": "tsc -p tsconfig.esm.json --watch",
     "prepublishOnly": "npm run build",
     "smoke": "node scripts/smoke.mjs",
     "test": "tsc --noEmit && vitest run",
